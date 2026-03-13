@@ -1,0 +1,18 @@
+#:schema https://mise.jdx.dev/schema/mise.json
+
+# ─────────────────────────────────────────────
+# skills-cli — mise configuration
+# ─────────────────────────────────────────────
+
+[tools]
+python = "3.12"
+uv = "latest"
+go = "1.23.12"
+gofumpt = "latest"
+golangci-lint = "latest"
+
+[env]
+MISE_PROJECT_ROOT = "{{config_root}}"
+SCAFFOLD_PROJECT_NAME  = "skills-cli"
+SCAFFOLD_PROJECT_SHAPE = "single"
+SCAFFOLD_PROJECT_STACK = "go"
