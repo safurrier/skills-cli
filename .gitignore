@@ -28,3 +28,6 @@ Thumbs.db
 
 # mise
 .mise.local.toml
+scripts/__pycache__/
+test-results/
+bin/
