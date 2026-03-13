@@ -30,23 +30,25 @@ index:
 
 ### Components
 
-<!-- List major components/modules and their responsibilities -->
-
 | Component | Purpose |
 |---|---|
-| <!-- name --> | <!-- purpose --> |
+| `cmd/main.go` | Entry point — delegates to cobra root command |
+| `internal/cmd/` | CLI layer — cobra subcommands (list, inspect, init, run) |
+| `internal/skill/model.go` | Domain types: Skill, Properties, RenderInput |
+| `internal/skill/parser.go` | YAML frontmatter parsing + spec validation |
+| `internal/skill/discover.go` | Directory scanning across spec-defined paths |
+| `internal/skill/render.go` | Full inline rendering (template + passthrough modes) |
+| `internal/skill/pointer.go` | Pointer output mode (location + params, no content) |
 
 ### Primary Data Flows
 
-<!-- Describe the main request/data flows through the system -->
-
-1. <!-- flow 1 -->
+1. **Discovery**: Scan `.agents/skills/`, `.claude/skills/`, `skills/`, and root children for SKILL.md files
+2. **Parse**: Split frontmatter from body, validate against spec constraints, extract `skills-cli.*` extensions from metadata
+3. **Invoke**: Either pointer mode (default — outputs location + params) or render mode (fills templates, builds parameter blocks)
 
 ### Trust Boundaries
 
-<!-- Where does trust change? e.g., external API boundary, user input validation point -->
-
-- <!-- boundary 1 -->
+- Filesystem input: SKILL.md files are untrusted user content — YAML parsing uses safe loader, field lengths are bounded
 
 ---
 
@@ -54,11 +56,15 @@ index:
 
 **Goals** — what this system optimizes for:
 
-- <!-- goal 1 -->
+- Spec compliance: match agentskills.io validation rules exactly
+- CLI ergonomics for humans invoking skills
+- Pointer-first: agents read the skill file themselves rather than receiving rendered content
 
 **Non-Goals** — explicit exclusions:
 
-- <!-- non-goal 1 -->
+- No agent runtime or execution engine
+- No remote skill registry or fetching
+- No complex template engine (Jinja2, Go templates)
 
 ---
 
@@ -66,32 +72,19 @@ index:
 
 > These rules prevent catastrophic mistakes. Violating them requires an ADR.
 
-### Security & Auth
+### Spec Compliance
 
-- All authorization and critical validation occur in trusted service boundaries, not in clients.
-- New endpoints or background jobs must declare their auth model before merging.
-
-### Data & Migrations
-
-- Database migrations are forward-only; no rollback scripts.
-- Schema changes require a migration and a compatibility plan.
+- SKILL.md parsing must match the [agentskills.io specification](https://agentskills.io/specification) exactly.
+- `skills-cli.*` metadata keys are the only extension mechanism — no custom frontmatter fields outside `metadata`.
+- Discovery paths follow the spec: `.agents/skills/`, `.claude/skills/`, plus `skills/` as a pragmatic addition.
 
 ### Worktree Safety
 
-- All services must start and all tests must pass from a **clean checkout or Git worktree**.
+- All tests must pass from a **clean checkout or Git worktree**.
 - No reliance on absolute paths, mutable global state, or undeclared local artifacts.
 - Build artifacts must be deterministic or listed in `.gitignore`.
 
-### Traceability & Observability
-
-- All requests and background jobs carry a **correlation ID** (`trace_id` / `request_id`).
-- Distributed calls propagate trace context.
-- Logs are **structured** (machine-parseable) and include stable keys: `service`, `env`,
-  correlation ID.
-- Background jobs are **idempotent** and safe to retry.
-
-> If these constraints do not yet apply (e.g., pure CLI, library), remove inapplicable
-> sections and document why.
+> Security & Auth, Data & Migrations, and Traceability sections are not applicable — this is a pure CLI tool with no network, database, or service components.
 
 ---
 
@@ -99,14 +92,10 @@ index:
 
 > Durable preferences. If a rule is critical and objective, enforce it in CI instead.
 
-- **Prefer thin handlers and service-layer logic** — reduces test cost and keeps handlers
-  stateless.
-- **Prefer explicit timeouts and retries on external calls** — prevents silent hangs.
-- **Prefer structured logs with correlation IDs** — debugging depends on traceability.
-- **Prefer shared typed utilities over one-off implementations** — invariants stay
-  centralized.
-
-<!-- Add project-specific principles here -->
+- **Domain logic in `internal/skill/`, CLI wiring in `internal/cmd/`** — cobra commands are thin wrappers.
+- **Pointer-first** — default output points agents to the skill file rather than inlining content.
+- **Spec-compliant extensions** — all CLI-specific behavior uses `metadata` with `skills-cli.*` keys, never custom frontmatter fields.
+- **Simple template substitution** — `{{key}}` only, no template engine dependency.
 
 ---
 
@@ -150,7 +139,8 @@ materially constrain work.
 
 | ADR | Decision |
 |---|---|
-| [0001-stack-choice](decisions/0001-stack-choice.md) | Stack selection for skills-cli |
+| [0001-stack-choice](decisions/0001-stack-choice.md) | Go stack for single-binary CLI distribution |
+| [0002-pointer-default](decisions/0002-pointer-default.md) | Default `run` outputs pointer prompt, not rendered content |
 
 ---
 
@@ -161,7 +151,9 @@ materially constrain work.
 
 | Module | Purpose | Docs |
 |---|---|---|
-| <!-- module --> | <!-- purpose --> | — |
+| `internal/skill` | Domain logic: types, parsing, discovery, rendering | — |
+| `internal/cmd` | CLI commands: cobra subcommands and flag parsing | — |
+| `testdata/sample-skills` | Test fixtures: 3 sample skills from the RFC prototype | — |
 
 ---
 

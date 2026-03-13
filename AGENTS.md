@@ -1,10 +1,10 @@
 # skills-cli
 
-A skills-cli project
+Go CLI for the [Agent Skills](https://agentskills.io) open standard. Discovers, validates, inspects, and invokes SKILL.md files in repositories.
 
 ## WHY
 
-<!-- Describe the problem this project solves in 2-3 sentences -->
+The Agent Skills spec defines a file format and directory structure for agent skills but has no CLI layer for humans. This tool bridges that gap. Key design choice: default `run` outputs a pointer prompt (skill location + params) instead of rendering content inline — agents read the file themselves.
 
 **Done means**: all `mise run check` gates pass; intended behavior is covered by tests.
 
@@ -14,14 +14,15 @@ Correctness invariants live in [`SPEC.md`](SPEC.md). System design and decisions
 
 ```
 skills-cli/
-├── cmd/                    # Entry points
-├── internal/               # Private packages
-│   └── app/                # Core application logic
+├── cmd/main.go             # Entry point (cobra)
+├── internal/
+│   ├── cmd/                # CLI commands: list, inspect, init, run
+│   └── skill/              # Domain: model, parser, discover, render, pointer
+├── testdata/sample-skills/ # Test fixtures (3 sample skills)
 ├── .mise.toml              # Task runner config
-├── go.mod                  # Go module config
-├── .golangci.yml           # Linter config
-├── Dockerfile              # Multi-stage distroless build
-└── README.md
+├── go.mod                  # Go module (github.com/safurrier/skills-cli)
+├── .golangci.yml           # Linter config (17 linters)
+└── Dockerfile              # Multi-stage distroless build
 ```
 
 Key steering files:

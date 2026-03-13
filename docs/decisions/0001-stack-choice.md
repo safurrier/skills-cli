@@ -16,45 +16,45 @@ index:
 # ADR 0001: Stack Choice for skills-cli
 
 **Status**: Accepted
-**Date**: <!-- YYYY-MM-DD -->
-**Deciders**: <!-- names or team -->
+**Date**: 2026-03-12
+**Deciders**: Alex Furrier
 **Generated from**: init
 
 ---
 
 ## Context
 
-skills-cli requires a primary implementation stack for building, testing, and
-deploying the application. The choice constrains tooling, CI configuration, and
-contributor onboarding.
+skills-cli needs a primary implementation stack. The prototype was in Python (~400 lines), but the production tool should be a single binary with no runtime dependencies for easy distribution.
 
 ## Decision
 
-**Stack**: go
+**Stack**: Go
 
-The Go stack uses:
-- **go** (1.23) as the compiler and module manager
+- **go** as the compiler and module manager
 - **gofumpt** for formatting (stricter than gofmt)
 - **golangci-lint** for linting (17 linters)
 - **go vet** for static analysis
 - **go test** for testing
+- **cobra** for CLI framework
+- **gopkg.in/yaml.v3** for YAML parsing
 
 ## Consequences
 
 **Positive**:
 
-- Standard tooling with strong ecosystem support.
-- Consistent quality gates via `mise run check`.
-- Reproducible builds via mise tool version pinning.
+- Single binary distribution — no Python/Node runtime needed
+- Fast startup — important for CLI tools invoked frequently
+- Strong stdlib for file I/O and path handling
+- cobra gives shell completion and help generation for free
 
 **Negative / Trade-offs**:
 
-- <!-- list accepted trade-offs, e.g., "Go compilation adds ~30s to cold CI runs" -->
+- YAML parsing is less ergonomic than Python's pyyaml
+- More verbose than the Python prototype (~1600 lines vs ~400)
 
 ## Alternatives Considered
 
-<!-- List stacks that were considered but not chosen, and why -->
-
 | Alternative | Reason not chosen |
 |---|---|
-| <!-- alt --> | <!-- reason --> |
+| Python (production) | Requires Python runtime on user's machine; prototype proved the concept but distribution is harder |
+| Rust | Heavier build toolchain; Go is sufficient for this use case |
